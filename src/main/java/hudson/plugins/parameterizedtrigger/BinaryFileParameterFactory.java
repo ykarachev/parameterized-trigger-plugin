@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -58,15 +56,16 @@ public class BinaryFileParameterFactory extends AbstractBuildParameterFactory {
     public List<AbstractBuildParameters> getParameters(AbstractBuild<?, ?> build, TaskListener listener) throws IOException, InterruptedException, AbstractBuildParameters.DontTriggerException {
         List<AbstractBuildParameters> result = Lists.newArrayList();
 
+        String filePattern = build.getEnvironment(listener).expand(getFilePattern());
         try {
             // save them into the master because FileParameterValue might need files after the slave workspace have disappeared/reused
             FilePath target = new FilePath(build.getRootDir()).child("parameter-files");
-            int n = build.getWorkspace().copyRecursiveTo(getFilePattern(), target);
+            int n = build.getWorkspace().copyRecursiveTo(filePattern, target);
 
             if (n==0) {
                 noFilesFoundAction.failCheck(listener);
             } else {
-                for(final FilePath f: target.list(getFilePattern())) {
+                for(final FilePath f: target.list(filePattern)) {
                     LOGGER.fine("Triggering build with " + f.getName());
 
                     result.add(new AbstractBuildParameters() {
@@ -90,7 +89,7 @@ public class BinaryFileParameterFactory extends AbstractBuildParameterFactory {
                 }
             }
         } catch (IOException ex) {
-            throw new IOException2("Failed to compute binary file parameters from "+getFilePattern(),ex);
+            throw new IOException2("Failed to compute binary file parameters from "+ filePattern,ex);
         }
 
         return result;

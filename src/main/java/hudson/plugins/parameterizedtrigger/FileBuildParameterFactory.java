@@ -106,7 +106,8 @@ public class FileBuildParameterFactory extends AbstractBuildParameterFactory {
 
         try {
             FilePath workspace = getWorkspace(build);
-            FilePath[] files = workspace.list(getFilePattern());
+            String filePattern = build.getEnvironment(listener).expand(getFilePattern());
+            FilePath[] files = workspace.list(filePattern);
             if(files.length == 0) {
                 noFilesFoundAction.failCheck(listener);
             } else {
